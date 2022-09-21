@@ -264,7 +264,7 @@ function moveEnemies() {
 			continue; // skip the rest of the code for this enemy since it is not in range
 		}
 
-		if (Math.abs(enemy.x - player.x) >= Math.abs(enemy.y - player.y)) enemy.x -= rotatedi; //move the enemy horizontally if the player is closer horizontally (horizontal priority)
+		if (Math.abs(enemy.x - player.x) >= Math.abs(enemy.y - player.y)) enemy.x -= rotatedi; //move horizontally first (horizontal priority)
 		else enemy.y += ydist;
 
 		for (let i = 0; i < rocks.length; i++) {
@@ -275,8 +275,8 @@ function moveEnemies() {
 				return;
 			}
 		}
-		enemy.enemybounceoffset = Math.abs(Math.sin(frameCount / 4)) * 5; // make the enemy bounce up and down slightly to make it look more alive when chasing the player to make it easy to see where the enemy is chasing vs wandering
-		enemy.enemyrotateoffset = 0.1 * rotatedi * Math.abs(Math.sin(frameCount / 4)); // make the enemy rotate slightly to make it look more alive when chasing the player to make it easy to see where the enemy is chasing vs wandering
+		enemy.enemybounceoffset = Math.abs(Math.sin(frameCount / 4)) * 5; // make the enemy bounce up and down slightly
+		enemy.enemyrotateoffset = 0.1 * rotatedi * Math.abs(Math.sin(frameCount / 4)); // make the enemy rotate slightly
 	}
 }
 class Tile {
@@ -310,7 +310,6 @@ class Tile {
 			this.wheelw = this.w / 4;
 			this.gunlen = 10;
 			push();
-			// rectMode(CENTER);
 			fill(103, 140, 199);
 			rect(-this.w / 2, -this.h / 2, this.w, this.h);
 			for (let i = int(-this.h / 2); i < 1 + this.h / 2; i += int(this.h / this.numtracks)) {
@@ -327,7 +326,7 @@ class Tile {
 			//if the tile is an enemy
 			push();
 			translate(this.x, this.y);
-			rotate(this.enemyrotateoffset);
+			if (!gameOver) rotate(this.enemyrotateoffset);
 			image(getSprite(1, 0), 0, -this.enemybounceoffset, 20, 20); //enemy
 			pop();
 		} else if (this.type == "r") {
