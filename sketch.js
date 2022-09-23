@@ -1,9 +1,8 @@
 p5.disableFriendlyErrors = true; // disables FES to increase performance
 function keyPressed() {
 	keyArray[keyCode] = 1;
-	if (key === " " && numBullets > 0 && !title && !gameOver && !gameWin) {
+	if (key === " " && !title && !gameOver && !gameWin) {
 		bul = new bulletStates(player.x + 10, player.y + 10, radians(playerAngle));
-		numBullets--; //decrement number of bullets left
 	}
 } 
 function keyReleased() {
@@ -16,26 +15,22 @@ function preload() {
 }
 function setup() {
 	createCanvas(400, 400);
-	//items are 20 pixels tall
-	//items are 20 pixels wide
-	//push items into the 2d tilemap
+	stroke(0);
+	strokeWeight(1);
 	rocks = [];
 	prizes = [];
 	enemies = [];
-	ammoBox = [];
 	translateX = 0;
 	translateY = 0;
 	killCount = 0;
 	playerAngle = 0;
-	numBullets = 6;
 	for (let i = 0; i < 42; i++) {
 		for (let j = 0; j < 42; j++) { 
 			if (map2[j][i] === " ") continue; //if the tile is empty, skip it
 			else if (map2[j][i] === "c") player = new    cclass(i * 20, j * 20); //player
 			else if (map2[j][i] === "r") rocks.push(new   rclass(i * 20, j * 20)); //rock
-			else if (map2[j][i] === "p") prizes.push(new  Tile(i * 20, j * 20, "p")); //prize
+			else if (map2[j][i] === "p") prizes.push(new  pclass(i * 20, j * 20)); //prize
 			else if (map2[j][i] === "e") enemies.push(new eclass(i * 20, j * 20)); //enemy
-			else if (map2[j][i] === "a") ammoBox.push(new Tile(i * 20, j * 20, "a")); //ammo box
 		}
 	}
 	initPlayer(); //initialize the player texture
@@ -137,13 +132,11 @@ function draw() {
 	for (var pri of prizes) pri.show();
 	for (var ene of enemies) ene.show();
 	for (var roc of rocks) roc.show();
-	for (var box in ammoBox) ammoBox[box].show();
 	player.show();
 
 	textSize(20);
 	fill(0);
 	text("Prizes Left: " + prizes.length, 10, 20); //draw the number of prizes left
-	text("Ammo: " + numBullets, 10, 40); //draw the number of bullets left
 	if (ex) ex.show(); //draw the explosion if there is one
 	if (bul) bul.show(); //draw the bullet if there is one
 }
@@ -157,7 +150,6 @@ var spritesheet;
 var enemies = [];
 var rocks = [];
 var prizes = [];
-var ammoBox = [];
 var player;
 var playertex;
 var walltexture;
@@ -167,7 +159,6 @@ var gameWin = false;
 var explosion;
 var ex;
 var bul;
-var numBullets = 6;
 const enemyspeed = 1.6;
 const playerspeed = 2;
 const map2 = [
@@ -243,10 +234,8 @@ function rectIntersect(r1, r2) {
 function movePlayer(x, y) {
 	const newPos = { x: player.x + x, y: player.y + y, w: 20, h: 20 }; //get the location of the intended move
 	for (let i = 0; i < rocks.length; i++) {
-		//check if the player collides with a rock
 		if (rectIntersect(newPos, rocks[i])) {
-			// make the player bounce back if they hit a rock
-			player.x -= 2 * x;
+			player.x -= 2 * x; // make the player bounce back if they hit a rock
 			player.y -= 2 * y;
 			return;
 		}
@@ -257,13 +246,6 @@ function movePlayer(x, y) {
 			prizes.splice(i, 1); //remove the prize from the array
 			i--;
 			gameWin = prizes.length === 0; //check if the player has won the game (if there are no prizes left)
-		}
-	}
-	for (let i = 0; i < ammoBox.length; i++) {
-		//check if the player collides with an ammo box
-		if (rectIntersect(newPos, ammoBox[i])) {
-			ammoBox.splice(i, 1); //remove the ammo box from the array
-			numBullets++; //add a bullet to the player's ammo
 		}
 	}
 	player.x = constrain(newPos.x, 20, 760); //constrain the player's position to the map
@@ -296,30 +278,24 @@ function moveEnemies() {
 		}
 	}
 }
-class Tile {
-	constructor(x, y, type) {
+class pclass {
+	constructor(x, y) {
 		this.x = x;
 		this.y = y;
 		this.w = 20;
 		this.h = 20;
-		this.type = type; // the type of tile this is (see above)
-		this.pindex = [int(random(3, 5)), int(random(2))]; //random index for the prize image
-		this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed); //the direction the enemy should wander in
+		this.color = [random(30, 110), random(60, 190), random(80, 255)];
 	}
 	show() {
 		push();
-		translate(translateX, translateY); //move the camera
-		if (this.type == "p") {
-			//if the tile is a prize
-			image(getSprite(this.pindex[0], this.pindex[1]), this.x, this.y, 20, 20); //prize
-		} else if (this.type == "a") {
-			//if the tile is an ammo crate
-			image(getSprite(4, 2), this.x, this.y, 20, 20); // ammo  crate
-		}
+		fill(this.color);
+		stroke(0);
+		strokeWeight(1);
+		translate(translateX + this.x + 10, translateY + this.y + 10);
+		circle(0, 0, 10);
 		pop();
 	}
 }
-class pclass {}
 class cclass {
 	constructor(x, y) {
 		this.x = x;
@@ -348,10 +324,21 @@ class eclass {
 	show() {
 		push();
 		translate(translateX + this.x + this.w / 2, translateY + this.y + this.h / 2); //move the camera
-		rotate(this.direction);
-		image(getSprite(1, 0), -this.w / 2, -this.h / 2);
-		stroke(0, 50);
-		circle(0, 0, 2 * this.range);
+		rotate(this.direction.heading());
+		translate(-this.w / 2, -this.h / 2);
+		push();
+		stroke(0);
+		fill(200, 40, 40);
+		circle(10, 10, 20);
+		fill(200, 200, 200);
+		noStroke();
+		let eyex = 14;
+		ellipse(eyex, 6, 5, 6);
+		ellipse(eyex, 14, 5, 6);
+		fill(0);
+		ellipse(eyex, 6, 4, 3);
+		ellipse(eyex, 14, 4, 3);
+		pop();
 		pop();
 	}
 	wander() {
@@ -415,8 +402,6 @@ class bulletStates {
 		if (!this.showB) return;
 		push();
 		translate(translateX + this.x, translateY + this.y);
-		// translate(10, 0);
-		// translate(0, -7);
 		rotate(this.dir);
 		fill(75);
 		beginShape();
@@ -431,11 +416,8 @@ class bulletStates {
 		this.y += this.direction.y;
 		pop();
 		for (let i = 0; i < rocks.length; i++) {
-			//check if the bullet is colliding with a rock
 			if (rectIntersect(this, rocks[i])) {
-				//if it is, remove the bullet and the rock
 				rocks.splice(i, 1);
-
 				ex = new explosionStates(this.x, this.y, this.dir);
 				this.showB = false;
 				return;
@@ -443,11 +425,10 @@ class bulletStates {
 		}
 		for (let i = 0; i < enemies.length; i++) {
 			if (rectIntersect(this, enemies[i])) {
-				//if the bullet hits an enemy
-				enemies.splice(i, 1); //remove the enemy
-				ex = new explosionStates(this.x, this.y, this.dir); //create an explosion
-				rocks.push(new rclass(this.x - 10, this.y - 10)); //create a rock where the enemy was killed
-				this.showB = false; //remove the bullet
+				enemies.splice(i, 1);
+				ex = new explosionStates(this.x, this.y, this.dir);
+				rocks.push(new rclass(this.x - 10, this.y - 10));
+				this.showB = false;
 				return;
 			}
 		}
