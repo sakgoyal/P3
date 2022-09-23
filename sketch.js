@@ -2,7 +2,7 @@ p5.disableFriendlyErrors = true; // disables FES to increase performance
 function keyPressed() {
 	keyArray[keyCode] = 1;
 	if (key === " " && numBullets > 0 && !title && !gameOver && !gameWin) {
-		bul = new bulletStates(player.x, player.y, radians(playerAngle));
+		bul = new bulletStates(player.x + 10, player.y + 10, radians(playerAngle));
 		numBullets--; //decrement number of bullets left
 	}
 } 
@@ -31,10 +31,10 @@ function setup() {
 	for (let i = 0; i < 42; i++) {
 		for (let j = 0; j < 42; j++) { 
 			if (map2[j][i] === " ") continue; //if the tile is empty, skip it
-			else if (map2[j][i] === "c") player = new    pclass(i * 20, j * 20, "c"); //player
-			else if (map2[j][i] === "r") rocks.push(new   Tile(i * 20, j * 20, "r")); //rock
+			else if (map2[j][i] === "c") player = new    cclass(i * 20, j * 20); //player
+			else if (map2[j][i] === "r") rocks.push(new   rclass(i * 20, j * 20)); //rock
 			else if (map2[j][i] === "p") prizes.push(new  Tile(i * 20, j * 20, "p")); //prize
-			else if (map2[j][i] === "e") enemies.push(new eclass(i * 20, j * 20, "e")); //enemy
+			else if (map2[j][i] === "e") enemies.push(new eclass(i * 20, j * 20)); //enemy
 			else if (map2[j][i] === "a") ammoBox.push(new Tile(i * 20, j * 20, "a")); //ammo box
 		}
 	}
@@ -269,11 +269,11 @@ function movePlayer(x, y) {
 	player.x = constrain(newPos.x, 20, 760); //constrain the player's position to the map
 	player.y = constrain(newPos.y, 20, 800);
 
-	const cameraMargin = 150; //the distance from the edge of the screen that the camera will start moving
-	if (player.x + translateX < cameraMargin) translateX += playerspeed; //move the camera left if the player is too far left
-	else if (player.x + translateX > width - cameraMargin) translateX -= playerspeed;
-	if (player.y + translateY < cameraMargin) translateY += playerspeed; //move the camera up if the player is too far up
-	else if (player.y + translateY > height - cameraMargin) translateY -= playerspeed;
+	const cameraMargin = 150;
+	if (player.x + translateX < cameraMargin) translateX++;
+	else if (player.x + translateX > width - cameraMargin) translateX--;
+	if (player.y + translateY < cameraMargin) translateY++;
+	else if (player.y + translateY > height - cameraMargin) translateY--;
 }
 function moveEnemies() {
 	for (let enemy of enemies) {
@@ -283,7 +283,7 @@ function moveEnemies() {
 		}
 		let xdist = Math.abs(enemy.x - player.x);
 		let ydist = Math.abs(enemy.y - player.y);
-		enemy.direction = p5.Vector.fromAngle(atan2(player.y - enemy.y, player.x - enemy.x));
+		enemy.direction = p5.Vector.fromAngle(atan2(player.y - enemy.y, player.x - enemy.x)).mult(enemyspeed);
 		if (xdist > ydist) enemy.x += enemy.direction.x;
 		else enemy.y += enemy.direction.y;
 
@@ -304,18 +304,12 @@ class Tile {
 		this.h = 20;
 		this.type = type; // the type of tile this is (see above)
 		this.pindex = [int(random(3, 5)), int(random(2))]; //random index for the prize image
-		this.enemybounceoffset = 0; //the amount the enemy should bounce up and down
-		this.enemyrotateoffset = 0; //the amount the enemy should rotate
-		this.wanderFrames = 3 * frameRate; //how many frames the enemy should wander for in seconds
 		this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed); //the direction the enemy should wander in
 	}
 	show() {
 		push();
 		translate(translateX, translateY); //move the camera
-		if (this.type == "r") {
-			//if the tile is a rock
-			image(rocktex, this.x, this.y);
-		} else if (this.type == "p") {
+		if (this.type == "p") {
 			//if the tile is a prize
 			image(getSprite(this.pindex[0], this.pindex[1]), this.x, this.y, 20, 20); //prize
 		} else if (this.type == "a") {
@@ -325,7 +319,8 @@ class Tile {
 		pop();
 	}
 }
-class pclass {
+class pclass {}
+class cclass {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
@@ -364,8 +359,8 @@ class eclass {
 			this.wanderFrames--;
 			for (let i = 0; i < rocks.length; i++) {
 				if (rectIntersect(this, rocks[i])) {
-					this.x += 4 * this.direction.x;
-					this.y += 4 * this.direction.y;
+					this.x -= 4 * this.direction.x;
+					this.y -= 4 * this.direction.y;
 					return;
 				}
 			}
@@ -386,8 +381,8 @@ class rclass {
 	}
 	show() {
 		push();
-		translate(translateX, translateY); //move the camera
-		image(rocktex, this.x, this.y);
+		translate(translateX, translateY);
+		image(rocktex, this.x, this.y, 20, 20);
 		pop();
 	}
 }
@@ -440,6 +435,7 @@ class bulletStates {
 			if (rectIntersect(this, rocks[i])) {
 				//if it is, remove the bullet and the rock
 				rocks.splice(i, 1);
+
 				ex = new explosionStates(this.x, this.y, this.dir);
 				this.showB = false;
 				return;
@@ -450,7 +446,7 @@ class bulletStates {
 				//if the bullet hits an enemy
 				enemies.splice(i, 1); //remove the enemy
 				ex = new explosionStates(this.x, this.y, this.dir); //create an explosion
-				rocks.push(new Tile(this.x, this.y, 20, 20, "r")); //create a rock where the enemy was killed
+				rocks.push(new rclass(this.x - 10, this.y - 10)); //create a rock where the enemy was killed
 				this.showB = false; //remove the bullet
 				return;
 			}
