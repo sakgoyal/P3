@@ -9,14 +9,13 @@ function keyReleased() {
 	keyArray[keyCode] = 0;
 }
 function preload() {
-	spritesheet = loadImage("WeaponCrypt.png"); //load spritesheet
-	walltexture = loadImage("walls.png"); //load wall texture
 	explosion = loadImage("explosion.png"); //load explosion spritesheet
 }
 function setup() {
 	createCanvas(400, 400);
 	stroke(0);
 	strokeWeight(1);
+	background(0, 0, 0, 0);
 	rocks = [];
 	prizes = [];
 	enemies = [];
@@ -25,11 +24,11 @@ function setup() {
 	killCount = 0;
 	playerAngle = 0;
 	for (let i = 0; i < 42; i++) {
-		for (let j = 0; j < 42; j++) { 
-			if (map2[j][i] === " ") continue; //if the tile is empty, skip it
-			else if (map2[j][i] === "c") player = new    cclass(i * 20, j * 20); //player
-			else if (map2[j][i] === "r") rocks.push(new   rclass(i * 20, j * 20)); //rock
-			else if (map2[j][i] === "p") prizes.push(new  pclass(i * 20, j * 20)); //prize
+		for (let j = 0; j < 42; j++) {
+			if (map2[j][i] === " ") grass.push(new gclass(i * 20, j * 20)); //if the tile is empty, add a grass tile
+			else if (map2[j][i] === "c") player = new cclass(i * 20, j * 20); //player
+			else if (map2[j][i] === "r") rocks.push(new rclass(i * 20, j * 20)); //rock
+			else if (map2[j][i] === "p") prizes.push(new pclass(i * 20, j * 20)); //prize
 			else if (map2[j][i] === "e") enemies.push(new eclass(i * 20, j * 20)); //enemy
 		}
 	}
@@ -42,7 +41,7 @@ function setup() {
 }
 function initPlayer() {
 	push();
-	background(100, 140, 0); //draw background color (green)
+	background(100, 140, 0, 0); //draw background color (green)
 	fill(103, 140, 199);
 	rect(0, 0, 20, 20); // main hull
 	noStroke();
@@ -176,35 +175,41 @@ function showTitle() {
 	text("Controls:", width / 2, height / 2 + 50);
 	text("WASD or Arrow Keys to move", width / 2, height / 2 + 70);
 	text("Space to shoot", width / 2, height / 2 + 90);
-	image(getSprite(3, 3), width / 2 - 32, height / 2 + 100, 64, 64);
+	// image(getSprite(3, 3), width / 2 - 32, height / 2 + 100, 64, 64);
 	if (keyArray[32] === 1) title = false;
 	pop();
 }
 function draw() {
 	// return setup();
-	background(100, 140, 0); //draw background color (green)
-	noStroke();
-
+	background(100, 140, 0);
 	if (title) return showTitle();
-	if (gameOver) return gameOverScreen(); //if the game is over, show the game over screen
-	if (gameWin) return gameWinScreen(); //if the game is won, show the game win screen
-	moveEnemies(); //move the enemies in the wander state or the chase state depending on the distance to the player
+	if (gameOver) return gameOverScreen();
+	if (gameWin) return gameWinScreen();
+	moveEnemies();
 	playermove();
 	for (let i = 0; i < enemies.length; i++) {
-		if (rectIntersect(player, enemies[i])) gameOver = true; //if the player collides with an enemy, the game is over
+		if (rectIntersect(player, enemies[i])) gameOver = true;
 	}
-	image(walltexture, translateX, translateY, 800, 840);
+	// draw all the grass tiles (ONLY ENABLE THIS IF YOUR COMPUTER IS FAST ENOUGH, OTHERWISE IT WILL BE SLOW)
+	for (let i = 0; i < grass.length; i++) grass[i].show();
+	stroke(0);
+
+	line(translateX + 20, translateY + 20, translateX + 780, translateY + 20); //top wall
+	line(translateX + 20, translateY + 20, translateX + 20, translateY + 820); //left wall
+	line(translateX + 780, translateY + 20, translateX + 780, translateY + 820); //right wall
+	line(translateX + 20, translateY + 820, translateX + 780, translateY + 820); //bottom wall
 
 	for (var pri of prizes) pri.show();
 	for (var ene of enemies) ene.show();
 	for (var roc of rocks) roc.show();
 	player.show();
 
+	noStroke();
 	textSize(20);
 	fill(0);
-	text("Prizes Left: " + prizes.length, 10, 20); //draw the number of prizes left
-	if (ex) ex.show(); //draw the explosion if there is one
-	if (bul) bul.show(); //draw the bullet if there is one
+	text("Prizes Left: " + prizes.length, 10, 20);
+	if (ex) ex.show();
+	if (bul) bul.show();
 }
 var title = true;
 var winRotate = 0;
@@ -212,13 +217,12 @@ var playerAngle = 0;
 var keyArray = [];
 var translateX = 0;
 var translateY = 0;
-var spritesheet;
 var enemies = [];
 var rocks = [];
 var prizes = [];
+var grass = [];
 var player;
 var playertex;
-var walltexture;
 var enemytex;
 var enemytex2;
 var bullettex;
@@ -496,5 +500,19 @@ class bulletclass {
 				return;
 			}
 		}
+	}
+}
+class gclass {
+	constructor(x, y) {
+		this.x = x;
+		this.y = y;
+		this.color = [random(80, 120), random(120, 160), random(0), random(0, 80)];
+	}
+	show() {
+		push();
+		translate(translateX, translateY);
+		fill(this.color);
+		rect(this.x, this.y, 20, 20);
+		pop();
 	}
 }
