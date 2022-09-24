@@ -2,7 +2,7 @@ p5.disableFriendlyErrors = true; // disables FES to increase performance
 function keyPressed() {
 	keyArray[keyCode] = 1;
 	if (key === " " && !title && !gameOver && !gameWin) {
-		bul = new bulletStates(player.x + 10, player.y + 10, radians(playerAngle));
+		bul = new bulletclass(player.x + 10, player.y + 10, radians(playerAngle));
 	}
 } 
 function keyReleased() {
@@ -36,6 +36,9 @@ function setup() {
 	initPlayer(); //initialize the player texture
 	translate(3, 25);
 	initRock(); //initialize the rock texture
+	initBullet(); //initialize the bullet texture
+	translate(0, 25);
+	initEnemy(); //initialize the enemy texture
 }
 function initPlayer() {
 	push();
@@ -72,6 +75,68 @@ function initRock() {
 	rect(2, 16, w - 4, 2);
 	rocktex = get(2, 23, 20, 25);
 	pop();
+	removeBackground(rocktex);
+}
+function initBullet() {
+	push();
+	let w = 15; //the width of the bullet
+	let h = 10; //the height of the bullet
+	translate(10, 80);
+	rotate(this.dir);
+	fill(75);
+	beginShape();
+	vertex(0, h / 4);
+	vertex(w / 2, h / 4);
+	vertex(w, 0);
+	vertex(w / 2, -h / 4);
+	vertex(0, -h / 4);
+	vertex(w / 6, 0);
+	endShape(CLOSE);
+	bullettex = get(11, 101, 18, 8);
+	pop();
+}
+function initEnemy() {
+	push();
+	stroke(0);
+	fill(200, 40, 40);
+	circle(10, 10, 20);
+	fill(200, 200, 200);
+	noStroke();
+	let eyex = 14;
+	ellipse(eyex, 6, 5, 6);
+	ellipse(eyex, 14, 5, 6);
+	fill(0);
+	ellipse(eyex, 6, 4, 3);
+	ellipse(eyex, 14, 4, 3);
+	pop();
+	enemytex = get(2, 49, 22, 22);
+	removeBackground(enemytex);
+	push();
+	translate(20, 20);
+	stroke(0);
+	fill(150, 40, 40);
+	circle(10, 10, 12);
+	fill(200, 200, 200);
+	noStroke();
+	ellipse(eyex, 6, 5, 6);
+	ellipse(eyex, 14, 5, 6);
+	fill(0);
+	ellipse(eyex, 6, 4, 3);
+	ellipse(eyex, 14, 4, 3);
+	pop();
+
+	enemytex2 = get(20, 70, 20, 20);
+	removeBackground(enemytex2);
+}
+function removeBackground(img) {
+	//this function removes the background color of an image
+	img.loadPixels();
+	for (let i = 0; i < img.pixels.length; i += 4) {
+		if (img.pixels[i] === 100 && img.pixels[i + 1] === 140 && img.pixels[i + 2] === 0) {
+			img.pixels[i + 3] = 0;
+		}
+	}
+	img.updatePixels();
 }
 function gameOverScreen() {
 	text("Game Over", 100, 200);
@@ -116,17 +181,18 @@ function showTitle() {
 	pop();
 }
 function draw() {
+	// return setup();
 	background(100, 140, 0); //draw background color (green)
 	noStroke();
+
 	if (title) return showTitle();
 	if (gameOver) return gameOverScreen(); //if the game is over, show the game over screen
 	if (gameWin) return gameWinScreen(); //if the game is won, show the game win screen
-	noFill();
 	moveEnemies(); //move the enemies in the wander state or the chase state depending on the distance to the player
+	playermove();
 	for (let i = 0; i < enemies.length; i++) {
 		if (rectIntersect(player, enemies[i])) gameOver = true; //if the player collides with an enemy, the game is over
 	}
-	playermove();
 	image(walltexture, translateX, translateY, 800, 840);
 
 	for (var pri of prizes) pri.show();
@@ -153,6 +219,9 @@ var prizes = [];
 var player;
 var playertex;
 var walltexture;
+var enemytex;
+var enemytex2;
+var bullettex;
 var rocktex;
 var gameOver = false;
 var gameWin = false;
@@ -166,15 +235,15 @@ const map2 = [
 	"wp           r     r                   w",
 	"w                            r         w",
 	"w   r     r        e              p    w",
-	"w                  r             r     w",
+	"w                  rr            r     w",
 	"w         a                            w",
-	"w     r   p               r            w",
-	"w                   r                  w",
+	"w     r   p                            w",
+	"w                                      w",
 	"w                               p      w",
 	"w        r        r                    w",
-	"w         c               r      r     w",
-	"w    r                                 w",
-	"w                 r     p           r  w",
+	"w         c       r       r      r     w",
+	"w    r            r                    w",
+	"w                       p           r  w",
 	"w          r             r             w",
 	"w                    a            e    w",
 	"w       p                      r   p   w",
@@ -184,22 +253,22 @@ const map2 = [
 	"w        p                             w",
 	"w                r                     w",
 	"w                        r     p       w",
-	"w  p                r                  w",
-	"w          r      r p e   r            w",
+	"w  p              r r                  w",
+	"w          r      r p e                w",
 	"w                                  r   w",
 	"w             r             r          w",
 	"w     r p                              w",
 	"w                r                     w",
-	"w                       r        r     w",
-	"w           r           p              w",
+	"w                       r              w",
+	"w           r           p         r    w",
 	"w     p                           r    w",
 	"w               a     r                w",
-	"w       r                    r         w",
 	"w                                      w",
-	"w      r    p    r                     w",
+	"w                                      w",
+	"w      rr   p    r          r          w",
 	"w                             p        w",
-	"w                    r              r  w",
-	"w       r       r    p                 w",
+	"w                                   r  w",
+	"w       r       r r  p                 w",
 	"w   e   p                   e          w",
 	"w            r         r      p     r  w",
 	"w                                      w",
@@ -259,13 +328,22 @@ function movePlayer(x, y) {
 }
 function moveEnemies() {
 	for (let enemy of enemies) {
-		if (distSquared(enemy.x, enemy.y, player.x, player.y) > enemy.range ** 2) {
+		//move away from the bullet if there is one
+		if (bul && bul.showB && distSquared(enemy.x, enemy.y, bul.x, bul.y) < 10000) {
+			//create a vector from the bullet to the enemy
+			let vec = p5.Vector.fromAngle(atan2(enemy.x - bul.x, enemy.y - bul.y)).normalize();
+			//move the enemy away from the bullet
+			enemy.x += vec.x * enemyspeed;
+			enemy.y += vec.y * enemyspeed;
+			enemy.direction = p5.Vector.fromAngle(atan2(vec.y, vec.x));
+		} else enemy.avoid = false;
+		if (!enemy.avoid && distSquared(enemy.x, enemy.y, player.x, player.y) > enemy.range ** 2) {
 			enemy.wander();
 			continue;
 		}
 		let xdist = Math.abs(enemy.x - player.x);
 		let ydist = Math.abs(enemy.y - player.y);
-		enemy.direction = p5.Vector.fromAngle(atan2(player.y - enemy.y, player.x - enemy.x)).mult(enemyspeed);
+		if (!enemy.avoid) enemy.direction = p5.Vector.fromAngle(atan2(player.y - enemy.y, player.x - enemy.x)).mult(enemyspeed);
 		if (xdist > ydist) enemy.x += enemy.direction.x;
 		else enemy.y += enemy.direction.y;
 
@@ -318,27 +396,18 @@ class eclass {
 		this.w = 20;
 		this.h = 20;
 		this.wanderFrames = 3 * frameRate; //how many frames the enemy should wander for in seconds
-		this.direction = p5.Vector.fromAngle(0); //the direction the enemy should wander in
+		this.direction = p5.Vector.fromAngle(0); //the direction the enemy should wander in or chase the player in
 		this.range = 100;
+		this.health = 2;
+		this.avoid = false; //whether the enemy should avoid the bullet
 	}
 	show() {
 		push();
 		translate(translateX + this.x + this.w / 2, translateY + this.y + this.h / 2); //move the camera
 		rotate(this.direction.heading());
 		translate(-this.w / 2, -this.h / 2);
-		push();
-		stroke(0);
-		fill(200, 40, 40);
-		circle(10, 10, 20);
-		fill(200, 200, 200);
-		noStroke();
-		let eyex = 14;
-		ellipse(eyex, 6, 5, 6);
-		ellipse(eyex, 14, 5, 6);
-		fill(0);
-		ellipse(eyex, 6, 4, 3);
-		ellipse(eyex, 14, 4, 3);
-		pop();
+		if (this.health === 2) image(enemytex, 0, 0);
+		else image(enemytex2, 0, 0);
 		pop();
 	}
 	wander() {
@@ -388,7 +457,7 @@ class explosionStates {
 		this.pos += 0.2; //increment the position of the explosion animation
 	}
 }
-class bulletStates {
+class bulletclass {
 	constructor(x, y, dir) {
 		this.dir = dir;
 		this.x = x;
@@ -403,15 +472,7 @@ class bulletStates {
 		push();
 		translate(translateX + this.x, translateY + this.y);
 		rotate(this.dir);
-		fill(75);
-		beginShape();
-		vertex(0, this.h / 4);
-		vertex(this.w / 2, this.h / 4);
-		vertex(this.w, 0);
-		vertex(this.w / 2, -this.h / 4);
-		vertex(0, -this.h / 4);
-		vertex(this.w / 6, 0);
-		endShape(CLOSE);
+		image(bullettex, 0, 0, 18, 9);
 		this.x += this.direction.x;
 		this.y += this.direction.y;
 		pop();
@@ -425,9 +486,12 @@ class bulletStates {
 		}
 		for (let i = 0; i < enemies.length; i++) {
 			if (rectIntersect(this, enemies[i])) {
-				enemies.splice(i, 1);
+				// enemies.splice(i, 1);
+				enemies[i].health--;
+				if (enemies[i].health <= 0) {
+					enemies.splice(i, 1);
+				}
 				ex = new explosionStates(this.x, this.y, this.dir);
-				rocks.push(new rclass(this.x - 10, this.y - 10));
 				this.showB = false;
 				return;
 			}
