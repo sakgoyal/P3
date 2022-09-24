@@ -8,9 +8,6 @@ function keyPressed() {
 function keyReleased() {
 	keyArray[keyCode] = 0;
 }
-function preload() {
-	explosion = loadImage("explosion.png"); //load explosion spritesheet
-}
 function setup() {
 	createCanvas(400, 400);
 	stroke(0);
@@ -74,7 +71,6 @@ function initRock() {
 	rect(2, 16, w - 4, 2);
 	rocktex = get(2, 23, 20, 25);
 	pop();
-	removeBackground(rocktex);
 }
 function initBullet() {
 	push();
@@ -109,7 +105,6 @@ function initEnemy() {
 	ellipse(eyex, 14, 4, 3);
 	pop();
 	enemytex = get(2, 49, 22, 22);
-	removeBackground(enemytex);
 	push();
 	translate(20, 20);
 	stroke(0);
@@ -123,19 +118,7 @@ function initEnemy() {
 	ellipse(eyex, 6, 4, 3);
 	ellipse(eyex, 14, 4, 3);
 	pop();
-
 	enemytex2 = get(20, 70, 20, 20);
-	removeBackground(enemytex2);
-}
-function removeBackground(img) {
-	//this function removes the background color of an image
-	img.loadPixels();
-	for (let i = 0; i < img.pixels.length; i += 4) {
-		if (img.pixels[i] === 100 && img.pixels[i + 1] === 140 && img.pixels[i + 2] === 0) {
-			img.pixels[i + 3] = 0;
-		}
-	}
-	img.updatePixels();
 }
 function gameOverScreen() {
 	text("Game Over", 100, 200);
@@ -229,7 +212,6 @@ var bullettex;
 var rocktex;
 var gameOver = false;
 var gameWin = false;
-var explosion;
 var ex;
 var bul;
 const enemyspeed = 1.6;
@@ -278,10 +260,6 @@ const map2 = [
 	"w                                      w",
 	"wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
 ];
-function getSprite(x, y) {
-	const imgr = 16;
-	return spritesheet.get(x * imgr, y * imgr, imgr, imgr); //get a sprite from the spritesheet at the given x and y coordinates
-}
 function distSquared(x1, y1, x2, y2) {
 	let dx = x2 - x1;
 	let dy = y2 - y1;
@@ -361,12 +339,14 @@ function moveEnemies() {
 	}
 }
 class pclass {
+	// prize class
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
 		this.w = 20;
 		this.h = 20;
 		this.color = [random(30, 110), random(60, 190), random(80, 255)];
+		this.img;
 	}
 	show() {
 		push();
@@ -379,6 +359,7 @@ class pclass {
 	}
 }
 class cclass {
+	// character class
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
@@ -394,6 +375,7 @@ class cclass {
 	}
 }
 class eclass {
+	// enemy class
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
@@ -433,6 +415,7 @@ class eclass {
 	}
 }
 class rclass {
+	// rock class
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
@@ -446,19 +429,33 @@ class rclass {
 		pop();
 	}
 }
-class explosionStates {
-	//the different states of the explosion
-	constructor(x, y, dir) {
+class explosionclass {
+	constructor(x, y) {
 		this.x = x;
 		this.y = y;
-		this.pos = 0; //the current position of the explosion animation
+		this.colorS = [255, 30, 30, 255];
+		this.colorF = [255, 255, 0, 255];
 	}
 	show() {
+		if (this.colorS[3] < 1) return;
 		push();
-		translate(translateX, translateY);
-		image(explosion.get(40 * int(this.pos), 0, 40, 37), this.x, this.y - 10, 20, 20); //explosion
+		stroke(this.colorS);
+		fill(this.colorF);
+		translate(translateX + this.x, translateY + this.y);
+		beginShape();
+		for (let i = 0; i < 50; i++) {
+			let v;
+			if (i % 2 == 0) v = createVector(random(-10, 10), random(-10, 10));
+			else v = createVector(random(-15, 15), random(-15, 15));
+			vertex(v.x, v.y);
+		}
+		endShape(CLOSE);
 		pop();
-		this.pos += 0.2; //increment the position of the explosion animation
+		this.colorS[3] -= 10;
+		this.colorS[0] -= 1;
+		this.colorF[0] -= 10;
+		this.colorF[1] -= 10;
+		this.colorF[3] -= 10;
 	}
 }
 class bulletclass {
@@ -483,7 +480,8 @@ class bulletclass {
 		for (let i = 0; i < rocks.length; i++) {
 			if (rectIntersect(this, rocks[i])) {
 				rocks.splice(i, 1);
-				ex = new explosionStates(this.x, this.y, this.dir);
+				// ex = new explosionStates(this.x, this.y, this.dir);
+				ex = new explosionclass(this.x, this.y);
 				this.showB = false;
 				return;
 			}
@@ -495,7 +493,8 @@ class bulletclass {
 				if (enemies[i].health <= 0) {
 					enemies.splice(i, 1);
 				}
-				ex = new explosionStates(this.x, this.y, this.dir);
+				// ex = new explosionStates(this.x, this.y, this.dir);
+				ex = new explosionclass(this.x, this.y);
 				this.showB = false;
 				return;
 			}
