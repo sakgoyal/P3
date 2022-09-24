@@ -16,6 +16,7 @@ function setup() {
 	rocks = [];
 	prizes = [];
 	enemies = [];
+	trail = [];
 	translateX = 0;
 	translateY = 0;
 	killCount = 0;
@@ -150,7 +151,8 @@ function showTitle() {
 	textSize(32);
 	fill(255);
 	textAlign(CENTER);
-	text("Weapon Crypt", width / 2, height / 2 - 50);
+	text("Shooty Shooty", width / 2, height / 2 - 80);
+	text("Bang Bang", width / 2, height / 2 - 40);
 	textSize(16);
 	text("Press Space to Start", width / 2, height / 2);
 	// show the controls
@@ -168,15 +170,15 @@ function draw() {
 	if (title) return showTitle();
 	if (gameOver) return gameOverScreen();
 	if (gameWin) return gameWinScreen();
-	moveEnemies();
 	playermove();
 	for (let i = 0; i < enemies.length; i++) {
+		enemies[i].move();
 		if (rectIntersect(player, enemies[i])) gameOver = true;
 	}
 	// draw all the grass tiles (ONLY ENABLE THIS IF YOUR COMPUTER IS FAST ENOUGH, OTHERWISE IT WILL BE SLOW)
 	for (let i = 0; i < grass.length; i++) grass[i].show();
-	stroke(0);
 
+	stroke(0);
 	line(translateX + 20, translateY + 20, translateX + 780, translateY + 20); //top wall
 	line(translateX + 20, translateY + 20, translateX + 20, translateY + 820); //left wall
 	line(translateX + 780, translateY + 20, translateX + 780, translateY + 820); //right wall
@@ -185,8 +187,27 @@ function draw() {
 	for (var pri of prizes) pri.show();
 	for (var ene of enemies) ene.show();
 	for (var roc of rocks) roc.show();
-	player.show();
 
+	// create a trail of lines behind the player that fades out over time
+	for (let i = 0; i < trail.length; i++) {
+		push();
+		translate(translateX + trail[i].x, translateY + trail[i].y);
+		rotate(radians(trail[i].angle));
+		stroke(0, 0, 0, i * 5);
+		line(0, 0, trail[i].x - trail[i].x2, trail[i].y - trail[i].y2);
+		pop();
+	}
+	// add the current position of the player to the trail
+	trail.push({
+		x: player.x + player.w / 2,
+		y: player.y + player.h / 2,
+		x2: player.x,
+		y2: player.y + player.h / 2,
+		angle: playerAngle,
+	});
+	if (trail.length > 30) trail.shift(); // remove the oldest line in the trail if there are more than 50 lines
+
+	player.show();
 	noStroke();
 	textSize(20);
 	fill(0);
@@ -204,6 +225,7 @@ var enemies = [];
 var rocks = [];
 var prizes = [];
 var grass = [];
+var trail = [];
 var player;
 var playertex;
 var enemytex;
@@ -308,35 +330,12 @@ function movePlayer(x, y) {
 	if (player.y + translateY < cameraMargin) translateY++;
 	else if (player.y + translateY > height - cameraMargin) translateY--;
 }
-function moveEnemies() {
-	for (let enemy of enemies) {
-		//move away from the bullet if there is one
-		if (bul && bul.showB && distSquared(enemy.x, enemy.y, bul.x, bul.y) < 10000) {
-			//create a vector from the bullet to the enemy
-			let vec = p5.Vector.fromAngle(atan2(enemy.x - bul.x, enemy.y - bul.y)).normalize();
-			//move the enemy away from the bullet
-			enemy.x += vec.x * enemyspeed;
-			enemy.y += vec.y * enemyspeed;
-			enemy.direction = p5.Vector.fromAngle(atan2(vec.y, vec.x));
-		} else enemy.avoid = false;
-		if (!enemy.avoid && distSquared(enemy.x, enemy.y, player.x, player.y) > enemy.range ** 2) {
-			enemy.wander();
-			continue;
-		}
-		let xdist = Math.abs(enemy.x - player.x);
-		let ydist = Math.abs(enemy.y - player.y);
-		if (!enemy.avoid) enemy.direction = p5.Vector.fromAngle(atan2(player.y - enemy.y, player.x - enemy.x)).mult(enemyspeed);
-		if (xdist > ydist) enemy.x += enemy.direction.x;
-		else enemy.y += enemy.direction.y;
-
-		for (let i = 0; i < rocks.length; i++) {
-			if (rectIntersect(enemy, rocks[i])) {
-				enemy.x -= 4 * enemy.direction.x;
-				enemy.y -= 4 * enemy.direction.y;
-				return;
-			}
-		}
-	}
+function orthogonalProjection(a, b, p) {
+	// find nearest point along a LINE
+	d1 = p5.Vector.sub(b, a).normalize();
+	d2 = p5.Vector.sub(p, a);
+	d1.mult(d2.dot(d1));
+	return p5.Vector.add(a, d1);
 }
 class pclass {
 	// prize class
@@ -396,6 +395,43 @@ class eclass {
 		else image(enemytex2, 0, 0);
 		pop();
 	}
+	move() {
+		if (bul && bul.showB) {
+			let a = bul.start;
+			let b = bul.end;
+			let p = createVector(this.x, this.y);
+			let op = orthogonalProjection(a, b, p);
+			let d = p5.Vector.dist(p, op);
+			let avoiddir = createVector(this.x - op.x, this.y - op.y)
+				.normalize()
+				.mult(enemyspeed);
+			if (d < 100 && dist(bul.x, bul.y, this.x, this.y) < 100) {
+				this.avoid = true;
+				this.x = constrain(this.x + avoiddir.x, 20, 760);
+				this.y = constrain(this.y + avoiddir.y, 20, 800);
+				this.direction = avoiddir;
+			} else this.avoid = false;
+		} else this.avoid = false;
+		if (!this.avoid && distSquared(this.x, this.y, player.x, player.y) > this.range ** 2) {
+			this.wander();
+			return;
+		}
+		let xdist = Math.abs(this.x - player.x);
+		let ydist = Math.abs(this.y - player.y);
+		if (!this.avoid) this.direction = p5.Vector.fromAngle(atan2(player.y - this.y, player.x - this.x)).mult(enemyspeed);
+		if (xdist > ydist) this.x += this.direction.x;
+		else this.y += this.direction.y;
+
+		for (let i = 0; i < rocks.length; i++) {
+			if (rectIntersect(this, rocks[i])) {
+				this.x -= 4 * this.direction.x;
+				this.y -= 4 * this.direction.y;
+				return;
+			}
+		}
+		this.x = constrain(this.x, 20, 760);
+		this.y = constrain(this.y, 20, 800);
+	}
 	wander() {
 		if (this.wanderFrames > 0) {
 			this.wanderFrames--;
@@ -403,6 +439,8 @@ class eclass {
 				if (rectIntersect(this, rocks[i])) {
 					this.x -= 4 * this.direction.x;
 					this.y -= 4 * this.direction.y;
+					this.wanderFrames = random(60, 120);
+					this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed);
 					return;
 				}
 			}
@@ -464,6 +502,8 @@ class bulletclass {
 		this.x = x;
 		this.y = y;
 		this.direction = p5.Vector.fromAngle(this.dir).mult(5); //the direction the bullet should move in
+		this.start = createVector(this.x, this.y);
+		this.end = createVector(this.x + 260 * this.direction.x, this.y + 260 * this.direction.y);
 		this.w = 15; //the width of the bullet
 		this.h = 10; //the height of the bullet
 		this.showB = true; //whether or not the bullet should be shown
