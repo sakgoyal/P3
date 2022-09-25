@@ -164,30 +164,7 @@ function showTitle() {
 	if (keyArray[32] === 1) title = false;
 	pop();
 }
-function draw() {
-	// return setup();
-	background(100, 140, 0);
-	if (title) return showTitle();
-	if (gameOver) return gameOverScreen();
-	if (gameWin) return gameWinScreen();
-	playermove();
-	for (let i = 0; i < enemies.length; i++) {
-		enemies[i].move();
-		if (rectIntersect(player, enemies[i])) gameOver = true;
-	}
-	// draw all the grass tiles (ONLY ENABLE THIS IF YOUR COMPUTER IS FAST ENOUGH, OTHERWISE IT WILL BE SLOW)
-	for (let i = 0; i < grass.length; i++) grass[i].show();
-
-	stroke(0);
-	line(translateX + 20, translateY + 20, translateX + 780, translateY + 20); //top wall
-	line(translateX + 20, translateY + 20, translateX + 20, translateY + 820); //left wall
-	line(translateX + 780, translateY + 20, translateX + 780, translateY + 820); //right wall
-	line(translateX + 20, translateY + 820, translateX + 780, translateY + 820); //bottom wall
-
-	for (var pri of prizes) pri.show();
-	for (var ene of enemies) ene.show();
-	for (var roc of rocks) roc.show();
-
+function handletrails() {
 	// create a trail of lines behind the player that fades out over time
 	for (let i = 0; i < trail.length; i++) {
 		push();
@@ -206,6 +183,29 @@ function draw() {
 		angle: playerAngle,
 	});
 	if (trail.length > 30) trail.shift(); // remove the oldest line in the trail if there are more than 50 lines
+}
+function draw() {
+	background(100, 140, 0);
+	if (title) return showTitle();
+	if (gameOver) return gameOverScreen();
+	if (gameWin) return gameWinScreen();
+
+	for (let i = 0; i < grass.length; i++) grass[i].show(); // draw all the grass tiles (ONLY ENABLE THIS IF YOUR COMPUTER IS FAST ENOUGH, OTHERWISE IT WILL BE SLOW)
+	playermove();
+	for (let i = 0; i < enemies.length; i++) {
+		enemies[i].move();
+		enemies[i].show();
+		if (rectIntersect(player, enemies[i])) gameOver = true;
+	}
+
+	stroke(0);
+	line(translateX + 20, translateY + 20, translateX + 780, translateY + 20); //top wall
+	line(translateX + 20, translateY + 20, translateX + 20, translateY + 820); //left wall
+	line(translateX + 780, translateY + 20, translateX + 780, translateY + 820); //right wall
+	line(translateX + 20, translateY + 820, translateX + 780, translateY + 820); //bottom wall
+
+	for (var pri of prizes) pri.show();
+	for (var roc of rocks) roc.show();
 
 	player.show();
 	noStroke();
@@ -297,6 +297,7 @@ function playermove() {
 		movePlayer(cos(radians(playerAngle)) * playerspeed * forward, 0); //move the player horizontally
 		movePlayer(0, sin(radians(playerAngle)) * playerspeed * forward); //move the player vertically
 	}
+	handletrails();
 }
 function rectIntersect(r1, r2) {
 	//check if two rectangles intersect (used to check collisions)
