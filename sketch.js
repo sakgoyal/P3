@@ -184,6 +184,21 @@ function handletrails() {
 	});
 	if (trail.length > 30) trail.shift(); // remove the oldest line in the trail if there are more than 50 lines
 }
+function showWall() {
+	push();
+	translate(translateX + 20, translateY + 20);
+	line(0, 0, 760, 0); //top wall
+	line(0, 0, 0, 800); //left wall
+	line(760, 0, 760, 800); //right wall
+	line(0, 800, 760, 800); //bottom wall
+	pop();
+}
+function showPrizeleft() {
+	noStroke();
+	textSize(20);
+	fill(0);
+	text("Prizes Left: " + prizes.length, 10, 20);
+}
 function draw() {
 	background(100, 140, 0);
 	if (title) return showTitle();
@@ -197,23 +212,14 @@ function draw() {
 		enemies[i].show();
 		if (rectIntersect(player, enemies[i])) gameOver = true;
 	}
-
-	stroke(0);
-	line(translateX + 20, translateY + 20, translateX + 780, translateY + 20); //top wall
-	line(translateX + 20, translateY + 20, translateX + 20, translateY + 820); //left wall
-	line(translateX + 780, translateY + 20, translateX + 780, translateY + 820); //right wall
-	line(translateX + 20, translateY + 820, translateX + 780, translateY + 820); //bottom wall
-
 	for (var pri of prizes) pri.show();
 	for (var roc of rocks) roc.show();
-
+	stroke(0);
+	showWall();
 	player.show();
-	noStroke();
-	textSize(20);
-	fill(0);
-	text("Prizes Left: " + prizes.length, 10, 20);
 	if (ex) ex.show();
 	if (bul) bul.show();
+	showPrizeleft();
 }
 var title = true;
 var winRotate = 0;
@@ -331,13 +337,6 @@ function movePlayer(x, y) {
 	if (player.y + translateY < cameraMargin) translateY++;
 	else if (player.y + translateY > height - cameraMargin) translateY--;
 }
-function orthogonalProjection(a, b, p) {
-	// find nearest point along a LINE
-	d1 = p5.Vector.sub(b, a).normalize();
-	d2 = p5.Vector.sub(p, a);
-	d1.mult(d2.dot(d1));
-	return p5.Vector.add(a, d1);
-}
 class pclass {
 	// prize class
 	constructor(x, y) {
@@ -401,7 +400,7 @@ class eclass {
 			let a = bul.start;
 			let b = bul.end;
 			let p = createVector(this.x, this.y);
-			let op = orthogonalProjection(a, b, p);
+			let op = eclass.orthogonalProjection(a, b, p);
 			let d = p5.Vector.dist(p, op);
 			let avoiddir = createVector(this.x - op.x, this.y - op.y)
 				.normalize()
@@ -451,6 +450,13 @@ class eclass {
 			this.wanderFrames = random(60, 120);
 			this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed);
 		}
+	}
+	static orthogonalProjection(a, b, p) {
+		// find nearest point along a LINE
+		let d1 = p5.Vector.sub(b, a).normalize();
+		let d2 = p5.Vector.sub(p, a);
+		d1.mult(d2.dot(d1));
+		return p5.Vector.add(a, d1);
 	}
 }
 class rclass {
