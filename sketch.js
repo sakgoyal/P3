@@ -396,43 +396,9 @@ class eclass {
 		pop();
 	}
 	move() {
-		if (bul && bul.showB) {
-			//if the bullet is active
-			let a = bul.start;
-			let b = bul.end;
-			let p = createVector(this.x, this.y);
-			let op = eclass.orthogonalProjection(a, b, p); //get the orthogonal projection of the bullet on the enemy
-			let d = p5.Vector.dist(p, op);
-			let avoiddir = createVector(this.x - op.x, this.y - op.y)
-				.normalize()
-				.mult(enemyspeed); //get the direction the enemy should move to avoid the bullet
-			if (d < 100 && dist(bul.x, bul.y, this.x, this.y) < 100) {
-				this.avoid = true;
-				this.x = constrain(this.x + avoiddir.x, 20, 760);
-				this.y = constrain(this.y + avoiddir.y, 20, 800);
-				this.direction = avoiddir;
-			} else this.avoid = false; //if the bullet is not close enough to the enemy, stop avoiding it
-		} else this.avoid = false;
-		if (!this.avoid && distSquared(this.x, this.y, player.x, player.y) > this.range ** 2) {
-			return this.wander(); //if the enemy is not avoiding the bullet and is not close enough to the player, wander
-		}
-		let xdist = Math.abs(this.x - player.x);
-		let ydist = Math.abs(this.y - player.y);
-		//if the enemy is not avoiding the bullet, chase the player
-		if (!this.avoid) this.direction = p5.Vector.fromAngle(atan2(player.y - this.y, player.x - this.x)).mult(enemyspeed);
-		if (xdist > ydist) this.x += this.direction.x;
-		else this.y += this.direction.y;
-
-		for (let i = 0; i < rocks.length; i++) {
-			//check if the enemy collides with a rock
-			if (rectIntersect(this, rocks[i])) {
-				this.x -= 4 * this.direction.x;
-				this.y -= 4 * this.direction.y;
-				return;
-			}
-		}
-		this.x = constrain(this.x, 20, 760); //constrain the enemy's position to the map
-		this.y = constrain(this.y, 20, 800);
+		if (this.avoidBullet()) return; //if the enemy should avoid the bullet, do so and exit the function
+		if (distSquared(this.x, this.y, player.x, player.y) > this.range ** 2) return this.wander(); // wander if the player is far away, and exit the function
+		this.chasePlayer(); // chase the player if they are close enough
 	}
 	wander() {
 		if (this.wanderFrames > 0) {
@@ -453,6 +419,49 @@ class eclass {
 		} else {
 			this.wanderFrames = random(60, 120); //randomize the amount of frames the enemy should wander for
 			this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed);
+		}
+	}
+	avoidBullet() {
+		if (bul && bul.showB) {
+			//if the bullet is active
+			let a = bul.start;
+			let b = bul.end;
+			let p = createVector(this.x, this.y);
+			let op = eclass.orthogonalProjection(a, b, p); //get the orthogonal projection of the bullet on the enemy
+			let d = p5.Vector.dist(p, op);
+			let avoiddir = createVector(this.x - op.x, this.y - op.y)
+				.normalize()
+				.mult(enemyspeed); //get the direction the enemy should move to avoid the bullet
+			if (d < 100 && dist(bul.x, bul.y, this.x, this.y) < 100) {
+				this.avoid = true;
+				this.x = constrain(this.x + avoiddir.x, 20, 760);
+				this.y = constrain(this.y + avoiddir.y, 20, 800);
+				for (let i = 0; i < rocks.length; i++) {
+					if (rectIntersect(this, rocks[i])) {
+						this.x -= 4 * avoiddir.x;
+						this.y -= 4 * avoiddir.y;
+						return;
+					}
+				}
+				this.direction = avoiddir;
+				return true;
+			} else this.avoid = false; //if the bullet is not close enough to the enemy, stop avoiding it
+		} else this.avoid = false;
+		return false; //return whether the enemy is avoiding the bullet
+	}
+	chasePlayer() {
+		let xdist = Math.abs(this.x - player.x);
+		let ydist = Math.abs(this.y - player.y);
+		this.direction = p5.Vector.fromAngle(atan2(player.y - this.y, player.x - this.x)).mult(enemyspeed);
+		if (xdist > ydist) this.x += this.direction.x;
+		else this.y += this.direction.y;
+		for (let i = 0; i < rocks.length; i++) {
+			//check if the enemy collides with a rock
+			if (rectIntersect(this, rocks[i])) {
+				this.x -= 4 * this.direction.x;
+				this.y -= 4 * this.direction.y;
+				return;
+			}
 		}
 	}
 	static orthogonalProjection(a, b, p) {
