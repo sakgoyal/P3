@@ -2,9 +2,10 @@ p5.disableFriendlyErrors = true; // disables FES to increase performance
 function keyPressed() {
 	keyArray[keyCode] = 1;
 	if (key === " " && !title && !gameOver && !gameWin) {
+		//if spacebar is pressed and the game is not over, shoot a bullet
 		bul = new bulletclass(player.x + 10, player.y + 10, radians(playerAngle));
 	}
-} 
+}
 function keyReleased() {
 	keyArray[keyCode] = 0;
 }
@@ -19,7 +20,6 @@ function setup() {
 	trail = [];
 	translateX = 0;
 	translateY = 0;
-	killCount = 0;
 	playerAngle = 0;
 	for (let i = 0; i < 42; i++) {
 		for (let j = 0; j < 42; j++) {
@@ -105,7 +105,7 @@ function initEnemy() {
 	ellipse(eyex, 6, 4, 3);
 	ellipse(eyex, 14, 4, 3);
 	pop();
-	enemytex = get(2, 49, 22, 22);
+	enemytex = get(2, 49, 22, 22); // get the texture for the enemy when full health
 	push();
 	translate(20, 20);
 	stroke(0);
@@ -119,10 +119,10 @@ function initEnemy() {
 	ellipse(eyex, 6, 4, 3);
 	ellipse(eyex, 14, 4, 3);
 	pop();
-	enemytex2 = get(20, 70, 20, 20);
+	enemytex2 = get(20, 70, 20, 20); // get the texture for the enemy when half health
 }
 function gameOverScreen() {
-	text("Game Over", 100, 200);
+	text("Game Over", 100, 200); //display game over text at the center of the screen
 	if (keyArray[32] === 1) {
 		//if spacebar is pressed restart the game
 		gameOver = false;
@@ -130,13 +130,13 @@ function gameOverScreen() {
 	}
 }
 function gameWinScreen() {
-	winRotate -= 0.05;
+	winRotate -= 0.05; //rotate the win text
 	push();
 	textAlign(CENTER);
 	textSize(32);
 	translate(width / 2, height / 2); //move to the center of the screen, so the text is centered and rotate the text around the center
 	rotate(winRotate);
-	text("You Win!", 0, 0);
+	text("You Win!", 0, 0); //display the win text
 
 	if (keyArray[32] === 1) {
 		//if spacebar is pressed restart the game
@@ -151,17 +151,15 @@ function showTitle() {
 	textSize(32);
 	fill(255);
 	textAlign(CENTER);
-	text("Shooty Shooty", width / 2, height / 2 - 80);
-	text("Bang Bang", width / 2, height / 2 - 40);
+	text("Shooty Shooty", width / 2, height / 2 - 80); //display the title
+	text("Bang Bang", width / 2, height / 2 - 40); //display the title 2
 	textSize(16);
 	text("Press Space to Start", width / 2, height / 2);
-	// show the controls
 	textSize(12);
-	text("Controls:", width / 2, height / 2 + 50);
+	text("Controls:", width / 2, height / 2 + 50); // show the controls
 	text("WASD or Arrow Keys to move", width / 2, height / 2 + 70);
 	text("Space to shoot", width / 2, height / 2 + 90);
-	// image(getSprite(3, 3), width / 2 - 32, height / 2 + 100, 64, 64);
-	if (keyArray[32] === 1) title = false;
+	if (keyArray[32] === 1) title = false; //if spacebar is pressed, start the game
 	pop();
 }
 function handletrails() {
@@ -185,7 +183,7 @@ function handletrails() {
 	if (trail.length > 30) trail.shift(); // remove the oldest line in the trail if there are more than 50 lines
 }
 function showWall() {
-	push();
+	push(); //draw the walls of the map
 	translate(translateX + 20, translateY + 20);
 	line(0, 0, 760, 0); //top wall
 	line(0, 0, 0, 800); //left wall
@@ -197,17 +195,18 @@ function showPrizeleft() {
 	noStroke();
 	textSize(20);
 	fill(0);
-	text("Prizes Left: " + prizes.length, 10, 20);
+	text("Prizes Left: " + prizes.length, 10, 20); //display the number of prizes left on the screen
 }
 function draw() {
 	background(100, 140, 0);
-	if (title) return showTitle();
-	if (gameOver) return gameOverScreen();
-	if (gameWin) return gameWinScreen();
+	if (title) return showTitle(); //if the title screen is active, show the title screen
+	if (gameOver) return gameOverScreen(); //if the game is over, show the game over screen
+	if (gameWin) return gameWinScreen(); //if the game is won, show the game win screen
 
 	for (let i = 0; i < grass.length; i++) grass[i].show(); // draw all the grass tiles (ONLY ENABLE THIS IF YOUR COMPUTER IS FAST ENOUGH, OTHERWISE IT WILL BE SLOW)
-	playermove();
+	playermove(); //move the player
 	for (let i = 0; i < enemies.length; i++) {
+		//move all the enemies
 		enemies[i].move();
 		enemies[i].show();
 		if (rectIntersect(player, enemies[i])) gameOver = true;
@@ -215,33 +214,33 @@ function draw() {
 	for (var pri of prizes) pri.show();
 	for (var roc of rocks) roc.show();
 	stroke(0);
-	showWall();
-	player.show();
-	if (ex) ex.show();
-	if (bul) bul.show();
+	showWall(); //draw the walls of the map
+	player.show(); //draw the player
+	if (ex) ex.show(); //draw the explosion if it exists
+	if (bul) bul.show(); //draw the bullet if it exists
 	showPrizeleft();
 }
-var title = true;
-var winRotate = 0;
-var playerAngle = 0;
+var title = true; //if the title screen is active
+var winRotate = 0; //the rotation of the win text
+var playerAngle = 0; //the angle of the player
 var keyArray = [];
-var translateX = 0;
-var translateY = 0;
+var translateX = 0; //the x position of the camera
+var translateY = 0; //the y position of the camera
 var enemies = [];
 var rocks = [];
 var prizes = [];
 var grass = [];
 var trail = [];
 var player;
-var playertex;
-var enemytex;
-var enemytex2;
-var bullettex;
-var rocktex;
-var gameOver = false;
-var gameWin = false;
-var ex;
-var bul;
+var playertex; //the texture of the player
+var enemytex; //the texture of the enemy
+var enemytex2; //the texture of the enemy when it has half health
+var bullettex; //the texture of the bullet
+var rocktex; //the texture of the rock
+var gameOver = false; //if the game is over
+var gameWin = false; //if the game is won
+var ex; //the explosion
+var bul; //the bullet
 const enemyspeed = 1.6;
 const playerspeed = 2;
 const map2 = [
@@ -291,7 +290,7 @@ const map2 = [
 function distSquared(x1, y1, x2, y2) {
 	let dx = x2 - x1;
 	let dy = y2 - y1;
-	return dx * dx + dy * dy; //calculate the distance between two points squared (faster than calculating the actual distance)
+	return dx * dx + dy * dy; //calculate the distance between two points without sqrt (faster)
 }
 function playermove() {
 	let forward;
@@ -303,7 +302,7 @@ function playermove() {
 		movePlayer(cos(radians(playerAngle)) * playerspeed * forward, 0); //move the player horizontally
 		movePlayer(0, sin(radians(playerAngle)) * playerspeed * forward); //move the player vertically
 	}
-	handletrails();
+	handletrails(); //draw the trail
 }
 function rectIntersect(r1, r2) {
 	//check if two rectangles intersect (used to check collisions)
@@ -332,7 +331,7 @@ function movePlayer(x, y) {
 	player.y = constrain(newPos.y, 20, 800);
 
 	const cameraMargin = 150;
-	if (player.x + translateX < cameraMargin) translateX++;
+	if (player.x + translateX < cameraMargin) translateX++; //move the camera if the player is close to the edge of the screen
 	else if (player.x + translateX > width - cameraMargin) translateX--;
 	if (player.y + translateY < cameraMargin) translateY++;
 	else if (player.y + translateY > height - cameraMargin) translateY--;
@@ -344,10 +343,11 @@ class pclass {
 		this.y = y;
 		this.w = 20;
 		this.h = 20;
-		this.color = [random(30, 110), random(60, 190), random(80, 255)];
+		this.color = [random(30, 110), random(60, 190), random(80, 255)]; //randomize the color of the prize
 		this.img;
 	}
 	show() {
+		//draw the prize
 		push();
 		fill(this.color);
 		stroke(0);
@@ -368,7 +368,7 @@ class cclass {
 	show() {
 		push();
 		translate(translateX + this.x + this.w / 2, translateY + this.y + this.h / 2); //move the camera
-		rotate(radians(playerAngle + 90));
+		rotate(radians(playerAngle + 90)); //rotate the player to face the direction they are moving
 		image(playertex, -this.w / 2, -this.h / 2);
 		pop();
 	}
@@ -389,54 +389,58 @@ class eclass {
 	show() {
 		push();
 		translate(translateX + this.x + this.w / 2, translateY + this.y + this.h / 2); //move the camera
-		rotate(this.direction.heading());
+		rotate(this.direction.heading()); //rotate the enemy to face the direction they are moving
 		translate(-this.w / 2, -this.h / 2);
-		if (this.health === 2) image(enemytex, 0, 0);
+		if (this.health === 2) image(enemytex, 0, 0); //draw the enemy based on their health
 		else image(enemytex2, 0, 0);
 		pop();
 	}
 	move() {
 		if (bul && bul.showB) {
+			//if the bullet is active
 			let a = bul.start;
 			let b = bul.end;
 			let p = createVector(this.x, this.y);
-			let op = eclass.orthogonalProjection(a, b, p);
+			let op = eclass.orthogonalProjection(a, b, p); //get the orthogonal projection of the bullet on the enemy
 			let d = p5.Vector.dist(p, op);
 			let avoiddir = createVector(this.x - op.x, this.y - op.y)
 				.normalize()
-				.mult(enemyspeed);
+				.mult(enemyspeed); //get the direction the enemy should move to avoid the bullet
 			if (d < 100 && dist(bul.x, bul.y, this.x, this.y) < 100) {
 				this.avoid = true;
 				this.x = constrain(this.x + avoiddir.x, 20, 760);
 				this.y = constrain(this.y + avoiddir.y, 20, 800);
 				this.direction = avoiddir;
-			} else this.avoid = false;
+			} else this.avoid = false; //if the bullet is not close enough to the enemy, stop avoiding it
 		} else this.avoid = false;
 		if (!this.avoid && distSquared(this.x, this.y, player.x, player.y) > this.range ** 2) {
-			this.wander();
-			return;
+			return this.wander(); //if the enemy is not avoiding the bullet and is not close enough to the player, wander
 		}
 		let xdist = Math.abs(this.x - player.x);
 		let ydist = Math.abs(this.y - player.y);
+		//if the enemy is not avoiding the bullet, chase the player
 		if (!this.avoid) this.direction = p5.Vector.fromAngle(atan2(player.y - this.y, player.x - this.x)).mult(enemyspeed);
 		if (xdist > ydist) this.x += this.direction.x;
 		else this.y += this.direction.y;
 
 		for (let i = 0; i < rocks.length; i++) {
+			//check if the enemy collides with a rock
 			if (rectIntersect(this, rocks[i])) {
 				this.x -= 4 * this.direction.x;
 				this.y -= 4 * this.direction.y;
 				return;
 			}
 		}
-		this.x = constrain(this.x, 20, 760);
+		this.x = constrain(this.x, 20, 760); //constrain the enemy's position to the map
 		this.y = constrain(this.y, 20, 800);
 	}
 	wander() {
 		if (this.wanderFrames > 0) {
+			//if the enemy should still be wandering
 			this.wanderFrames--;
 			for (let i = 0; i < rocks.length; i++) {
 				if (rectIntersect(this, rocks[i])) {
+					//check if the enemy collides with a rock
 					this.x -= 4 * this.direction.x;
 					this.y -= 4 * this.direction.y;
 					this.wanderFrames = random(60, 120);
@@ -447,11 +451,12 @@ class eclass {
 			this.x = constrain(this.x + this.direction.x, 20, 760);
 			this.y = constrain(this.y + this.direction.y, 20, 800);
 		} else {
-			this.wanderFrames = random(60, 120);
+			this.wanderFrames = random(60, 120); //randomize the amount of frames the enemy should wander for
 			this.direction = p5.Vector.random2D().mult(0.2 * enemyspeed);
 		}
 	}
 	static orthogonalProjection(a, b, p) {
+		//get the orthogonal projection of a point on a line
 		// find nearest point along a LINE
 		let d1 = p5.Vector.sub(b, a).normalize();
 		let d2 = p5.Vector.sub(p, a);
@@ -470,7 +475,7 @@ class rclass {
 	show() {
 		push();
 		translate(translateX, translateY);
-		image(rocktex, this.x, this.y, 20, 20);
+		image(rocktex, this.x, this.y, 20, 20); //draw the rock
 		pop();
 	}
 }
@@ -482,13 +487,14 @@ class explosionclass {
 		this.colorF = [255, 255, 0, 255];
 	}
 	show() {
-		if (this.colorS[3] < 1) return;
+		if (this.colorS[3] < 1) return; //if the explosion is invisible, stop drawing it
 		push();
 		stroke(this.colorS);
 		fill(this.colorF);
 		translate(translateX + this.x, translateY + this.y);
 		beginShape();
 		for (let i = 0; i < 50; i++) {
+			//draw the explosion as a bunch of random points
 			let v;
 			if (i % 2 == 0) v = createVector(random(-10, 10), random(-10, 10));
 			else v = createVector(random(-15, 15), random(-15, 15));
@@ -496,8 +502,8 @@ class explosionclass {
 		}
 		endShape(CLOSE);
 		pop();
-		this.colorS[3] -= 10;
-		this.colorS[0] -= 1;
+		this.colorS[3] -= 10; //make the explosion fade out over time
+		this.colorS[0] -= 1; // make the explosion's stroke color fade out over time
 		this.colorF[0] -= 10;
 		this.colorF[1] -= 10;
 		this.colorF[3] -= 10;
@@ -509,39 +515,36 @@ class bulletclass {
 		this.x = x;
 		this.y = y;
 		this.direction = p5.Vector.fromAngle(this.dir).mult(5); //the direction the bullet should move in
-		this.start = createVector(this.x, this.y);
-		this.end = createVector(this.x + 260 * this.direction.x, this.y + 260 * this.direction.y);
+		this.start = createVector(this.x, this.y); //the position the bullet was created at
+		this.end = createVector(this.x + 260 * this.direction.x, this.y + 260 * this.direction.y); //the position the bullet should stop at
 		this.w = 15; //the width of the bullet
 		this.h = 10; //the height of the bullet
 		this.showB = true; //whether or not the bullet should be shown
 	}
 	show() {
-		if (!this.showB) return;
+		if (!this.showB) return; //if the bullet should not be shown, stop drawing it
 		push();
 		translate(translateX + this.x, translateY + this.y);
 		rotate(this.dir);
 		image(bullettex, 0, 0, 18, 9);
-		this.x += this.direction.x;
+		this.x += this.direction.x; //move the bullet
 		this.y += this.direction.y;
 		pop();
 		for (let i = 0; i < rocks.length; i++) {
 			if (rectIntersect(this, rocks[i])) {
-				rocks.splice(i, 1);
-				// ex = new explosionStates(this.x, this.y, this.dir);
-				ex = new explosionclass(this.x, this.y);
+				//check if the bullet collides with a rock
+				rocks.splice(i, 1); //remove the rock
+				ex = new explosionclass(this.x, this.y); //create an explosion
 				this.showB = false;
 				return;
 			}
 		}
 		for (let i = 0; i < enemies.length; i++) {
 			if (rectIntersect(this, enemies[i])) {
-				// enemies.splice(i, 1);
-				enemies[i].health--;
-				if (enemies[i].health <= 0) {
-					enemies.splice(i, 1);
-				}
-				// ex = new explosionStates(this.x, this.y, this.dir);
-				ex = new explosionclass(this.x, this.y);
+				//check if the bullet collides with an enemy
+				enemies[i].health--; //decrease the enemy's health
+				if (enemies[i].health <= 0) enemies.splice(i, 1); //if the enemy's health is 0 or less, remove it
+				ex = new explosionclass(this.x, this.y); //create an explosion
 				this.showB = false;
 				return;
 			}
@@ -549,9 +552,11 @@ class bulletclass {
 	}
 }
 class gclass {
+	// background grass class (for the background)
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
+		//the color of the grass (the alpha value is randomized so that the grass looks more natural)
 		this.color = [random(80, 120), random(120, 160), random(0), random(0, 80)];
 	}
 	show() {
